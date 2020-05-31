@@ -69,12 +69,29 @@ const detectCollision = () => {
     return collision
 }
 
+const detectLineComplete = (linesToCheck) => {
+    for (var i = 0; i < linesToCheck.length; i++) {
+        // récupère tous les block remplis pour la ligne en itération
+        let filledBlock = activeShapes.map(el => el.block.filter(el2 => (el2.y === linesToCheck[i] ? el2  : null))).flat().map(el => el.x).sort((a, b) => a - b)
+        // vérifie si la sequence est complète
+        let missingBlock = Array.from(Array(width-0),(v,i)=>i+0).filter(i=>!filledBlock.includes(i));
+        if(Array.isArray(missingBlock) && missingBlock.length === 0) {
+            console.log("Line : " + linesToCheck[i] + " is full")
+            //todo : supprimer la ligne
+        }
+    }
+}
+
 const moveShapes = () => {
     if (!currentShape[0].block.find(el => el.y >= (width - 1)) && !detectCollision()){
         currentShape[0] = nextMovePosition
     } else {
-        // ajoute nouvelle forme au plateau
+        // vérifie si les lignes modifiées sont complètes
         activeShapes.push(currentShape[0])
+        let linesToCheck = currentShape[0].block.map(el => el.y).filter((v, i, a) => a.indexOf(v) === i)
+        detectLineComplete(linesToCheck)
+
+         // ajoute nouvelle forme au plateau
         currentShape.shift()
         currentShape.push(JSON.parse(JSON.stringify(shapes[Math.floor(Math.random() * shapes.length)])))
     }
@@ -87,10 +104,9 @@ const rotateShape = () => {
     let middle = new Vector(currentShape[0].block[currentShape[0].middle].x, currentShape[0].block[currentShape[0].middle].y) 
     // loop sur tous les block de la forme
     for (key in currentShape[0].block) {
-        let p = new Vector(currentShape[0].block[key].x, currentShape[0].block[key].y)
-        let p1 = p.subtract(middle)
-        let p2 = new Vector((r[0].x*p1.x)+(r[1].x*p1.y), (r[0].y*p1.x)+(r[1].y*p1.y))
-        p3 = middle.add(p2)
+        let p = new Vector(currentShape[0].block[key].x, currentShape[0].block[key].y).subtract(middle)
+        let p2 = new Vector((r[0].x*p.x)+(r[1].x*p.y), (r[0].y*p.x)+(r[1].y*p.y))
+        let p3 = middle.add(p2)
         currentShape[0].block[key].x = p3.x
         currentShape[0].block[key].y = p3.y
     }
@@ -139,6 +155,6 @@ const nextMove = () => {
             ctx.textAlign = "center";
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
           }
-    }, 100)
+    }, 250)
 }
 requestAnimationFrame(nextMove)

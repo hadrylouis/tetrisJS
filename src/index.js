@@ -78,6 +78,9 @@ const detectLineComplete = (linesToCheck) => {
         if(Array.isArray(missingBlock) && missingBlock.length === 0) {
             console.log("Line : " + linesToCheck[i] + " is full")
             //todo : supprimer la ligne
+            for (let shape in activeShapes) {
+                activeShapes[shape].block = activeShapes[shape].block.filter(el => el.y !== linesToCheck[i])
+            }
         }
     }
 }

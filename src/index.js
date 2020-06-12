@@ -48,25 +48,31 @@ const drawShape = () => {
     }
 }
 
-const detectCollision = () => {
-    let collision = false;
-    // loop sur l'élément en cours de descente
-    nextMovePosition = JSON.parse(JSON.stringify(currentShape[0]))
+const detectCollision = (shape) => {
+    let collision = false
+    let block = {}
+    // loop sur shape
+    nextMovePosition = JSON.parse(JSON.stringify(shape))
+    activeShapesWithoutCurrent = JSON.parse(JSON.stringify(activeShapes))
+    activeShapesWithoutCurrent = activeShapesWithoutCurrent.filter((v, i, a) => activeShapes.indexOf(shape) !== i)
+    
+
     for (let key in nextMovePosition.block) {
         nextMovePosition.block[key].y += 1
         // loop sur les formes déjà sur le plateau
-        for (let shape in activeShapes) {
+        for (let shape in activeShapesWithoutCurrent) {
             // loop sur chaque block de la forme en cours de descente
-                if (activeShapes[shape].block.find(el => JSON.stringify(el) === JSON.stringify(nextMovePosition.block[key]))) {
+                if (activeShapesWithoutCurrent[shape].block.find(el => JSON.stringify(el) === JSON.stringify(nextMovePosition.block[key]))) {
                     if (nextMovePosition.block.find(el => el.y == 0)) {
                         gameover = true
                     }
                     collision = true
+                    block = nextMovePosition.block[key]
                     break;
                 }
         }
     }
-    return collision
+    return {'collision': collision, 'block': block}
 }
 
 const detectLineComplete = (linesToCheck) => {
@@ -77,16 +83,19 @@ const detectLineComplete = (linesToCheck) => {
         let missingBlock = Array.from(Array(width-0),(v,i)=>i+0).filter(i=>!filledBlock.includes(i));
         if(Array.isArray(missingBlock) && missingBlock.length === 0) {
             console.log("Line : " + linesToCheck[i] + " is full")
-            //todo : supprimer la ligne
+            //supprime la ligne remplie
             for (let shape in activeShapes) {
                 activeShapes[shape].block = activeShapes[shape].block.filter(el => el.y !== linesToCheck[i])
+                if (!detectCollision(activeShapes[shape]).collision) {
+                    activeShapes[shape].block.filter(el => el.y < 19).map((el, index) => {el.y += 1; return el})
+                }
             }
         }
     }
 }
 
 const moveShapes = () => {
-    if (!currentShape[0].block.find(el => el.y >= (width - 1)) && !detectCollision()){
+    if (!currentShape[0].block.find(el => el.y >= (width - 1)) && !detectCollision(currentShape[0]).collision){
         currentShape[0] = nextMovePosition
     } else {
         // vérifie si les lignes modifiées sont complètes

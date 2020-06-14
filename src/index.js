@@ -12,9 +12,10 @@ let shapes = [
     {middle: 2, color: "red", block: [{x:7,y:0}, {x:8,y:0}, {x:8,y:1}, {x:9,y:1}]},
     {middle: 1, color: "orange", block: [{x:7,y:0}, {x:8,y:0}, {x:9,y:0}, {x:7,y:1}]},
 ]
-let currentShape = [], activeShapes = [], nextMovePosition = [], gameover = false
-// Default starting shape
-currentShape.push(JSON.parse(JSON.stringify(shapes[0])))
+let currentShape = [], activeShapes = [], nextMovePosition = [], gameover = false, points = 0
+
+// Random default starting shape
+currentShape.push(JSON.parse(JSON.stringify(shapes[Math.floor(Math.random() * shapes.length)])))
 
 const drawMap = () => {
     ctx.fillStyle = "black"
@@ -56,7 +57,6 @@ const detectCollision = (shape) => {
     activeShapesWithoutCurrent = JSON.parse(JSON.stringify(activeShapes))
     activeShapesWithoutCurrent = activeShapesWithoutCurrent.filter((v, i, a) => activeShapes.indexOf(shape) !== i)
     
-
     for (let key in nextMovePosition.block) {
         nextMovePosition.block[key].y += 1
         // loop sur les formes déjà sur le plateau
@@ -76,14 +76,15 @@ const detectCollision = (shape) => {
 }
 
 const detectLineComplete = (linesToCheck) => {
-    for (var i = 0; i < linesToCheck.length; i++) {
+    for (var i = 0; i < (width - 1); i++) {
         // récupère tous les block remplis pour la ligne en itération
         let filledBlock = activeShapes.map(el => el.block.filter(el2 => (el2.y === linesToCheck[i] ? el2  : null))).flat().map(el => el.x).sort((a, b) => a - b)
         // vérifie si la sequence est complète
         let missingBlock = Array.from(Array(width-0),(v,i)=>i+0).filter(i=>!filledBlock.includes(i));
         if(Array.isArray(missingBlock) && missingBlock.length === 0) {
             console.log("Line : " + linesToCheck[i] + " is full")
-            //supprime la ligne remplie
+            points += 20
+            //supprime la ligne remplie et descend toute la ligne de 1 
             for (let shape in activeShapes) {
                 activeShapes[shape].block = activeShapes[shape].block.filter(el => el.y !== linesToCheck[i])
                 if (!detectCollision(activeShapes[shape]).collision) {
@@ -106,6 +107,7 @@ const moveShapes = () => {
          // ajoute nouvelle forme au plateau
         currentShape.shift()
         currentShape.push(JSON.parse(JSON.stringify(shapes[Math.floor(Math.random() * shapes.length)])))
+        points += 10
     }
 }
 
@@ -156,13 +158,16 @@ const nextMove = () => {
     drawMap()
     moveShapes()
     drawShape()
+    ctx.fillStyle = "white";
+    ctx.font = "25px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText("Points : " + points, 20, 50);
 
     
     setTimeout(() => {
         if (!gameover) {
             requestAnimationFrame(nextMove);
           } else {
-            ctx.fillStyle = "white";
             ctx.font = "80px Arial";
             ctx.textAlign = "center";
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
